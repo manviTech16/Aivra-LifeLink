@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIVA Organ Donation Registry — Coimbatore</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8eaf0;
+    --muted: #6b7a99;
+    --accent: #4fc3f7;
+    --accent2: #7c83fd;
+    --red: #ef5350;
+    --green: #66bb6a;
+    --orange: #ffa726;
+    --pink: #f06292;
+    --teal: #26c6da;
+    --purple: #ab47bc;
+    --indigo: #5c6bc0;
+    --amber: #ffca28;
+
+    --heart: #ef5350;
+    --kidney: #42a5f5;
+    --liver: #a5d6a7;
+    --lungs: #80cbc4;
+    --eyes: #ce93d8;
+    --pancreas: #ffcc80;
+    --intestine: #f48fb1;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans', sans-serif; min-height:100vh; }
+  h1,h2,h3,h4 { font-family:'Syne', sans-serif; }
+
+  /* SIDEBAR */
+  .sidebar {
+    position:fixed; left:0; top:0; width:220px; height:100vh;
+    background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; z-index:100;
+    padding:28px 0 20px;
+  }
+  .logo {
+    padding:0 24px 28px;
+    border-bottom:1px solid var(--border);
+  }
+  .logo-mark {
+    font-family:'Syne',sans-serif; font-weight:800; font-size:22px;
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    letter-spacing:-0.5px;
+  }
+  .logo-sub { font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
+
+  .nav { flex:1; overflow-y:auto; padding:16px 0; }
+  .nav-section-label {
+    font-size:9px; color:var(--muted); letter-spacing:2.5px; text-transform:uppercase;
+    padding:8px 24px 6px; font-family:'Syne',sans-serif;
+  }
+  .nav-item {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 24px; cursor:pointer; font-size:13px; font-weight:500;
+    color:var(--muted); transition:all 0.2s; border-left:3px solid transparent;
+    position:relative;
+  }
+  .nav-item:hover { color:var(--text); background:rgba(255,255,255,0.04); }
+  .nav-item.active { color:var(--text); border-left-color:var(--accent); background:rgba(79,195,247,0.07); }
+  .nav-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .nav-badge {
+    margin-left:auto; font-size:10px; background:rgba(255,255,255,0.1);
+    border-radius:10px; padding:1px 7px; color:var(--muted);
+  }
+
+  /* MAIN */
+  .main { margin-left:220px; min-height:100vh; }
+
+  /* TOPBAR */
+  .topbar {
+    position:sticky; top:0; z-index:90;
+    background:rgba(10,14,26,0.85); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:14px 36px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .page-title { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
+  .page-subtitle { font-size:12px; color:var(--muted); margin-top:1px; }
+  .topbar-right { display:flex; gap:12px; align-items:center; }
+  .status-pill {
+    display:flex; align-items:center; gap:6px; font-size:12px;
+    background:rgba(102,187,106,0.12); color:#66bb6a;
+    border:1px solid rgba(102,187,106,0.2); border-radius:20px; padding:5px 12px;
+  }
+  .status-dot { width:6px; height:6px; border-radius:50%; background:#66bb6a; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .date-badge { font-size:11px; color:var(--muted); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:5px 12px; }
+
+  /* CONTENT */
+  .content { padding:32px 36px; }
+
+  /* PANEL PAGES */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ORGAN PANEL CARDS (overview row) */
+  .organ-panels {
+    display:grid; grid-template-columns:repeat(7,1fr); gap:12px; margin-bottom:32px;
+  }
+  .organ-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:16px 14px; cursor:pointer;
+    transition:all 0.25s; position:relative; overflow:hidden;
+  }
+  .organ-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--organ-color);
+  }
+  .organ-card:hover { transform:translateY(-3px); box-shadow:0 12px 30px rgba(0,0,0,0.3); border-color:rgba(255,255,255,0.12); }
+  .organ-card.selected { border-color:var(--organ-color); background:var(--surface2); }
+  .organ-icon { font-size:22px; margin-bottom:8px; }
+  .organ-name { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; color:var(--text); }
+  .organ-stats { display:flex; gap:8px; margin-top:8px; }
+  .stat-chip { font-size:10px; border-radius:6px; padding:3px 7px; font-weight:500; }
+  .stat-chip.d { background:rgba(102,187,106,0.15); color:#66bb6a; }
+  .stat-chip.r { background:rgba(239,83,80,0.15); color:#ef9a9a; }
+  .organ-urgency { margin-top:6px; font-size:10px; color:var(--muted); }
+
+  /* STATS STRIP */
+  .stats-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+  .stat-box {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:20px 22px;
+  }
+  .stat-box-label { font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-family:'Syne',sans-serif; }
+  .stat-box-value { font-family:'Syne',sans-serif; font-size:32px; font-weight:800; margin:6px 0 2px; }
+  .stat-box-sub { font-size:12px; color:var(--muted); }
+  .stat-box-value.green { color:#66bb6a; }
+  .stat-box-value.red { color:#ef9a9a; }
+  .stat-box-value.blue { color:var(--accent); }
+  .stat-box-value.orange { color:#ffa726; }
+
+  /* TABLES */
+  .section-title {
+    font-family:'Syne',sans-serif; font-size:16px; font-weight:700;
+    margin-bottom:14px; display:flex; align-items:center; gap:10px;
+  }
+  .section-title .tag {
+    font-size:10px; border-radius:6px; padding:3px 8px; font-weight:600;
+    letter-spacing:1px; text-transform:uppercase;
+  }
+  .tag.green { background:rgba(102,187,106,0.15); color:#66bb6a; }
+  .tag.red { background:rgba(239,83,80,0.15); color:#ef9a9a; }
+
+  .table-wrap {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; overflow:hidden; margin-bottom:28px;
+  }
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:rgba(255,255,255,0.03); }
+  th {
+    font-family:'Syne',sans-serif; font-size:10px; font-weight:700;
+    color:var(--muted); letter-spacing:1.5px; text-transform:uppercase;
+    padding:13px 18px; text-align:left; border-bottom:1px solid var(--border);
+  }
+  td { padding:12px 18px; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:rgba(255,255,255,0.02); }
+
+  .blood-badge {
+    display:inline-block; font-size:11px; font-weight:700; font-family:'Syne',sans-serif;
+    border-radius:6px; padding:2px 8px; border:1px solid;
+  }
+  .gender-badge {
+    display:inline-flex; width:22px; height:22px; border-radius:50%;
+    align-items:center; justify-content:center; font-size:10px; font-weight:700;
+  }
+  .gender-badge.M { background:rgba(79,195,247,0.15); color:var(--accent); }
+  .gender-badge.F { background:rgba(240,98,146,0.15); color:#f48fb1; }
+
+  .tissue-tag {
+    font-size:10px; background:rgba(124,131,253,0.15); color:var(--accent2);
+    border-radius:5px; padding:2px 7px; font-family:'Syne',sans-serif;
+  }
+  .history-badge {
+    font-size:11px; background:rgba(255,167,38,0.12); color:#ffcc80;
+    border-radius:6px; padding:2px 7px;
+  }
+  .matched-badge {
+    font-size:11px; font-weight:600; border-radius:6px; padding:3px 10px;
+  }
+  .matched-badge.yes { background:rgba(102,187,106,0.15); color:#66bb6a; }
+  .matched-badge.no { background:rgba(239,83,80,0.12); color:#ef9a9a; }
+
+  /* MATCH SECTION */
+  .match-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px; }
+  .match-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px;
+  }
+  .match-card-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; margin-bottom:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .match-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+    font-size:12.5px;
+  }
+  .match-row:last-child { border-bottom:none; }
+  .match-name { font-weight:500; }
+  .match-info { color:var(--muted); font-size:11px; }
+  .match-arrow { color:var(--accent); font-size:16px; }
+
+  /* BLOOD COLORS */
+  .bg-ap { border-color:rgba(239,83,80,0.4); color:#ef9a9a; background:rgba(239,83,80,0.1); }
+  .bg-an { border-color:rgba(239,83,80,0.3); color:#ef9a9a; background:rgba(239,83,80,0.07); }
+  .bg-bp { border-color:rgba(79,195,247,0.4); color:var(--accent); background:rgba(79,195,247,0.1); }
+  .bg-bn { border-color:rgba(79,195,247,0.3); color:var(--accent); background:rgba(79,195,247,0.07); }
+  .bg-op { border-color:rgba(102,187,106,0.4); color:#66bb6a; background:rgba(102,187,106,0.1); }
+  .bg-on { border-color:rgba(102,187,106,0.3); color:#66bb6a; background:rgba(102,187,106,0.07); }
+  .bg-abp { border-color:rgba(171,71,188,0.4); color:#ce93d8; background:rgba(171,71,188,0.1); }
+  .bg-abn { border-color:rgba(171,71,188,0.3); color:#ce93d8; background:rgba(171,71,188,0.07); }
+
+  /* OVERVIEW SPECIFIC */
+  .overview-grid { display:grid; grid-template-columns:1fr 1fr 1.2fr; gap:16px; margin-bottom:28px; }
+  .summary-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px; }
+  .summary-card-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; }
+  .organ-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px; }
+  .organ-row:last-child { border-bottom:none; }
+  .organ-row-name { display:flex; align-items:center; gap:8px; }
+  .organ-row-dot { width:8px; height:8px; border-radius:50%; }
+  .organ-row-counts { display:flex; gap:8px; }
+  .mini-bar-wrap { flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; margin:0 10px; }
+  .mini-bar { height:100%; border-radius:2px; background:var(--organ-color); }
+
+  .urgency-list { display:flex; flex-direction:column; gap:10px; }
+  .urgency-item { display:flex; align-items:center; gap:12px; padding:10px 14px; background:rgba(255,255,255,0.02); border-radius:10px; border:1px solid var(--border); }
+  .urgency-icon { font-size:18px; }
+  .urgency-text { flex:1; }
+  .urgency-name { font-size:13px; font-weight:500; }
+  .urgency-detail { font-size:11px; color:var(--muted); margin-top:1px; }
+  .urgency-badge { font-size:10px; padding:3px 9px; border-radius:20px; font-weight:600; }
+  .urgency-badge.critical { background:rgba(239,83,80,0.15); color:#ef9a9a; }
+  .urgency-badge.high { background:rgba(255,167,38,0.15); color:#ffa726; }
+
+  /* SEARCH */
+  .search-bar {
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:9px 16px; display:flex; align-items:center; gap:10px; margin-bottom:20px;
+  }
+  .search-bar input {
+    background:none; border:none; outline:none; color:var(--text); font-family:'DM Sans',sans-serif;
+    font-size:13px; flex:1;
+  }
+  .search-bar input::placeholder { color:var(--muted); }
+  .search-icon { color:var(--muted); font-size:14px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .page.active { animation:fadeIn 0.3s ease; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">AIVA</div>
+    <div class="logo-sub">Organ Registry · Coimbatore</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('overview', this)">
+      <span class="nav-dot" style="background:#4fc3f7"></span>Dashboard
+    </div>
+
+    <div class="nav-section-label" style="margin-top:8px">Organs</div>
+    <div class="nav-item" onclick="showPage('heart', this)">
+      <span class="nav-dot" style="background:#ef5350"></span>Heart
+      <span class="nav-badge">5D · 7R</span>
+    </div>
+    <div class="nav-item" onclick="showPage('kidney', this)">
+      <span class="nav-dot" style="background:#42a5f5"></span>Kidney
+      <span class="nav-badge">6D · 10R</span>
+    </div>
+    <div class="nav-item" onclick="showPage('liver', this)">
+      <span class="nav-dot" style="background:#a5d6a7"></span>Liver
+      <span class="nav-badge">6D · 8R</span>
+    </div>
+    <div class="nav-item" onclick="showPage('lungs', this)">
+      <span class="nav-dot" style="background:#80cbc4"></span>Lungs
+      <span class="nav-badge">3D · 4R</span>
+    </div>
+    <div class="nav-item" onclick="showPage('eyes', this)">
+      <span class="nav-dot" style="background:#ce93d8"></span>Eyes
+      <span class="nav-badge">4D · 5R</span>
+    </div>
+    <div class="nav-item" onclick="showPage('pancreas', this)">
+      <span class="nav-dot" style="background:#ffcc80"></span>Pancreas
+      <span class="nav-badge">3D · 3R</span>
+    </div>
+    <div class="nav-item" onclick="showPage('intestine', this)">
+      <span class="nav-dot" style="background:#f48fb1"></span>Intestine
+      <span class="nav-badge">3D · 4R</span>
+    </div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">Registry Dashboard</div>
+      <div class="page-subtitle" id="page-subtitle">Coimbatore District · All Organs Overview</div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill"><span class="status-dot"></span>System Active</div>
+      <div class="date-badge" id="datebadge"></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ====== ORGAN PANELS (always visible on top) ====== -->
+    <div class="organ-panels">
+      <div class="organ-card" style="--organ-color:#ef5350" onclick="showPage('heart')">
+        <div class="organ-icon">🫀</div>
+        <div class="organ-name">Heart</div>
+        <div class="organ-stats">
+          <span class="stat-chip d">5 D</span>
+          <span class="stat-chip r">7 R</span>
+        </div>
+        <div class="organ-urgency">⚠ 2 unmatched</div>
+      </div>
+      <div class="organ-card" style="--organ-color:#42a5f5" onclick="showPage('kidney')">
+        <div class="organ-icon">🫘</div>
+        <div class="organ-name">Kidney</div>
+        <div class="organ-stats">
+          <span class="stat-chip d">6 D</span>
+          <span class="stat-chip r">10 R</span>
+        </div>
+        <div class="organ-urgency">⚠ 4 unmatched</div>
+      </div>
+      <div class="organ-card" style="--organ-color:#a5d6a7" onclick="showPage('liver')">
+        <div class="organ-icon">🟤</div>
+        <div class="organ-name">Liver</div>
+        <div class="organ-stats">
+          <span class="stat-chip d">6 D</span>
+          <span class="stat-chip r">8 R</span>
+        </div>
+        <div class="organ-urgency">⚠ 2 unmatched</div>
+      </div>
+      <div class="organ-card" style="--organ-color:#80cbc4" onclick="showPage('lungs')">
+        <div class="organ-icon">🫁</div>
+        <div class="organ-name">Lungs</div>
+        <div class="organ-stats">
+          <span class="stat-chip d">3 D</span>
+          <span class="stat-chip r">4 R</span>
+        </div>
+        <div class="organ-urgency">⚠ 1 unmatched</div>
+      </div>
+      <div class="organ-card" style="--organ-color:#ce93d8" onclick="showPage('eyes')">
+        <div class="organ-icon">👁</div>
+        <div class="organ-name">Eyes</div>
+        <div class="organ-stats">
+          <span class="stat-chip d">4 D</span>
+          <span class="stat-chip r">5 R</span>
+        </div>
+        <div class="organ-urgency">⚠ 1 unmatched</div>
+      </div>
+      <div class="organ-card" style="--organ-color:#ffcc80" onclick="showPage('pancreas')">
+        <div class="organ-icon">🔶</div>
+        <div class="organ-name">Pancreas</div>
+        <div class="organ-stats">
+          <span class="stat-chip d">3 D</span>
+          <span class="stat-chip r">3 R</span>
+        </div>
+        <div class="organ-urgency">✓ 3 matched</div>
+      </div>
+      <div class="organ-card" style="--organ-color:#f48fb1" onclick="showPage('intestine')">
+        <div class="organ-icon">🌀</div>
+        <div class="organ-name">Intestine</div>
+        <div class="organ-stats">
+          <span class="stat-chip d">3 D</span>
+          <span class="stat-chip r">4 R</span>
+        </div>
+        <div class="organ-urgency">⚠ 1 unmatched</div>
+      </div>
+    </div>
+
+    <!-- ====== OVERVIEW PAGE ====== -->
+    <div class="page active" id="page-overview">
+      <div class="stats-strip">
+        <div class="stat-box">
+          <div class="stat-box-label">Total Donors</div>
+          <div class="stat-box-value green">30</div>
+          <div class="stat-box-sub">Across 7 organ types</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Total Recipients</div>
+          <div class="stat-box-value red">41</div>
+          <div class="stat-box-sub">Awaiting transplant</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Matched Pairs</div>
+          <div class="stat-box-value blue">22</div>
+          <div class="stat-box-sub">Blood + tissue compatible</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Shortage Gap</div>
+          <div class="stat-box-value orange">11</div>
+          <div class="stat-box-sub">Recipients without donor</div>
+        </div>
+      </div>
+
+      <div class="overview-grid">
+        <!-- Organ Summary -->
+        <div class="summary-card">
+          <div class="summary-card-title">Organ Summary</div>
+          <div class="organ-row">
+            <div class="organ-row-name"><span class="organ-row-dot" style="background:#ef5350"></span>Heart</div>
+            <div class="mini-bar-wrap"><div class="mini-bar" style="--organ-color:#ef5350;width:71%"></div></div>
+            <div class="organ-row-counts"><span style="color:#66bb6a;font-size:12px">5D</span><span style="color:#ef9a9a;font-size:12px">7R</span></div>
+          </div>
+          <div class="organ-row">
+            <div class="organ-row-name"><span class="organ-row-dot" style="background:#42a5f5"></span>Kidney</div>
+            <div class="mini-bar-wrap"><div class="mini-bar" style="--organ-color:#42a5f5;width:60%"></div></div>
+            <div class="organ-row-counts"><span style="color:#66bb6a;font-size:12px">6D</span><span style="color:#ef9a9a;font-size:12px">10R</span></div>
+          </div>
+          <div class="organ-row">
+            <div class="organ-row-name"><span class="organ-row-dot" style="background:#a5d6a7"></span>Liver</div>
+            <div class="mini-bar-wrap"><div class="mini-bar" style="--organ-color:#a5d6a7;width:75%"></div></div>
+            <div class="organ-row-counts"><span style="color:#66bb6a;font-size:12px">6D</span><span style="color:#ef9a9a;font-size:12px">8R</span></div>
+          </div>
+          <div class="organ-row">
+            <div class="organ-row-name"><span class="organ-row-dot" style="background:#80cbc4"></span>Lungs</div>
+            <div class="mini-bar-wrap"><div class="mini-bar" style="--organ-color:#80cbc4;width:75%"></div></div>
+            <div class="organ-row-counts"><span style="color:#66bb6a;font-size:12px">3D</span><span style="color:#ef9a9a;font-size:12px">4R</span></div>
+          </div>
+          <div class="organ-row">
+            <div class="organ-row-name"><span class="organ-row-dot" style="background:#ce93d8"></span>Eyes</div>
+            <div class="mini-bar-wrap"><div class="mini-bar" style="--organ-color:#ce93d8;width:80%"></div></div>
+            <div class="organ-row-counts"><span style="color:#66bb6a;font-size:12px">4D</span><span style="color:#ef9a9a;font-size:12px">5R</span></div>
+          </div>
+          <div class="organ-row">
+            <div class="organ-row-name"><span class="organ-row-dot" style="background:#ffcc80"></span>Pancreas</div>
+            <div class="mini-bar-wrap"><div class="mini-bar" style="--organ-color:#ffcc80;width:100%"></div></div>
+            <div class="organ-row-counts"><span style="color:#66bb6a;font-size:12px">3D</span><span style="color:#ef9a9a;font-size:12px">3R</span></div>
+          </div>
+          <div class="organ-row">
+            <div class="organ-row-name"><span class="organ-row-dot" style="background:#f48fb1"></span>Intestine</div>
+            <div class="mini-bar-wrap"><div class="mini-bar" style="--organ-color:#f48fb1;width:75%"></div></div>
+            <div class="organ-row-counts"><span style="color:#66bb6a;font-size:12px">3D</span><span style="color:#ef9a9a;font-size:12px">4R</span></div>
+          </div>
+        </div>
+
+        <!-- Blood Group Distribution -->
+        <div class="summary-card">
+          <div class="summary-card-title">Blood Group Pool</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span class="blood-badge bg-op">O+</span>
+              <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);margin:0 12px;border-radius:2px"><div style="height:100%;background:#66bb6a;width:65%;border-radius:2px"></div></div>
+              <span style="font-size:12px;color:var(--muted)">Most common</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span class="blood-badge bg-bp">B+</span>
+              <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);margin:0 12px;border-radius:2px"><div style="height:100%;background:var(--accent);width:50%;border-radius:2px"></div></div>
+              <span style="font-size:12px;color:var(--muted)">Common</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span class="blood-badge bg-ap">A+</span>
+              <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);margin:0 12px;border-radius:2px"><div style="height:100%;background:#ef9a9a;width:40%;border-radius:2px"></div></div>
+              <span style="font-size:12px;color:var(--muted)">Moderate</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span class="blood-badge bg-abp">AB+</span>
+              <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);margin:0 12px;border-radius:2px"><div style="height:100%;background:#ce93d8;width:30%;border-radius:2px"></div></div>
+              <span style="font-size:12px;color:var(--muted)">Less common</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span class="blood-badge bg-on">O−</span>
+              <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);margin:0 12px;border-radius:2px"><div style="height:100%;background:#66bb6a;width:20%;border-radius:2px"></div></div>
+              <span style="font-size:12px;color:var(--muted)">Rare</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span class="blood-badge bg-bn">B−</span>
+              <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);margin:0 12px;border-radius:2px"><div style="height:100%;background:var(--accent);width:18%;border-radius:2px"></div></div>
+              <span style="font-size:12px;color:var(--muted)">Rare</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0">
+              <span class="blood-badge bg-an">A−</span>
+              <div style="flex:1;height:3px;background:rgba(255,255,255,0.06);margin:0 12px;border-radius:2px"><div style="height:100%;background:#ef9a9a;width:10%;border-radius:2px"></div></div>
+              <span style="font-size:12px;color:var(--muted)">Very rare</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Critical Urgency -->
+        <div class="summary-card">
+          <div class="summary-card-title">Critical Recipients</div>
+          <div class="urgency-list">
+            <div class="urgency-item">
+              <div class="urgency-icon">🫀</div>
+              <div class="urgency-text">
+                <div class="urgency-name">Anita Das</div>
+                <div class="urgency-detail">Heart · B+ · HLA-C1 · Heart failure</div>
+              </div>
+              <div class="urgency-badge critical">Critical</div>
+            </div>
+            <div class="urgency-item">
+              <div class="urgency-icon">🫘</div>
+              <div class="urgency-text">
+                <div class="urgency-name">Meena Ravi</div>
+                <div class="urgency-detail">Kidney · O+ · HLA-A1 · Diabetic</div>
+              </div>
+              <div class="urgency-badge critical">Critical</div>
+            </div>
+            <div class="urgency-item">
+              <div class="urgency-icon">🟤</div>
+              <div class="urgency-text">
+                <div class="urgency-name">Priya Nair</div>
+                <div class="urgency-detail">Liver · A+ · HLA-B2 · Liver damage</div>
+              </div>
+              <div class="urgency-badge high">High</div>
+            </div>
+            <div class="urgency-item">
+              <div class="urgency-icon">🫁</div>
+              <div class="urgency-text">
+                <div class="urgency-name">Kavya Iyer</div>
+                <div class="urgency-detail">Lungs · AB+ · HLA-A2 · Liver cancer</div>
+              </div>
+              <div class="urgency-badge high">High</div>
+            </div>
+            <div class="urgency-item">
+              <div class="urgency-icon">🌀</div>
+              <div class="urgency-text">
+                <div class="urgency-name">Aruna Nair</div>
+                <div class="urgency-detail">Intestine · O− · HLA-C2 · Obesity</div>
+              </div>
+              <div class="urgency-badge high">High</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Donors quick table -->
+      <div class="section-title">All Registered Donors <span class="tag green">30 Total</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Organ</th><th>Age</th><th>Gender</th><th>Blood</th><th>Tissue</th><th>Area</th><th>Hospital / NGO</th></tr>
+          </thead>
+          <tbody id="all-donors-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ====== HEART PAGE ====== -->
+    <div class="page" id="page-heart">
+      <div class="stats-strip">
+        <div class="stat-box"><div class="stat-box-label">Donors</div><div class="stat-box-value green">5</div><div class="stat-box-sub">Brain dead donors</div></div>
+        <div class="stat-box"><div class="stat-box-label">Recipients</div><div class="stat-box-value red">7</div><div class="stat-box-sub">Awaiting heart</div></div>
+        <div class="stat-box"><div class="stat-box-label">Matched</div><div class="stat-box-value blue">5</div><div class="stat-box-sub">Compatible pairs</div></div>
+        <div class="stat-box"><div class="stat-box-label">Shortage</div><div class="stat-box-value orange">2</div><div class="stat-box-sub">Unmet recipients</div></div>
+      </div>
+      <div class="match-grid">
+        <div class="match-card">
+          <div class="match-card-title">✅ Matched Donor → Recipient Pairs</div>
+          <div class="match-row"><span class="match-name">Vikram Singh</span><span class="match-arrow">→</span><span class="match-name">Anita Das</span><span style="font-size:11px;color:#66bb6a">B+ · HLA-C1</span></div>
+          <div class="match-row"><span class="match-name">Rahul Das</span><span class="match-arrow">→</span><span class="match-name">Pooja Sharma</span><span style="font-size:11px;color:#66bb6a">B− · HLA-A4</span></div>
+          <div class="match-row"><span class="match-name">Sandeep</span><span class="match-arrow">→</span><span class="match-name">Nisha</span><span style="font-size:11px;color:#66bb6a">O+ · HLA-C2</span></div>
+          <div class="match-row"><span class="match-name">Ravi Kumar</span><span class="match-arrow">→</span><span class="match-name">Kavitha</span><span style="font-size:11px;color:#66bb6a">A+ · HLA-B1</span></div>
+          <div class="match-row"><span class="match-name">Praveen</span><span class="match-arrow">→</span><span class="match-name">Sudha</span><span style="font-size:11px;color:#66bb6a">O+ · HLA-C2</span></div>
+        </div>
+        <div class="match-card">
+          <div class="match-card-title">⚠ Unmatched Recipients</div>
+          <div class="match-row"><span class="match-name">Geetha</span><span class="match-info">AB+ · HLA-D3 · No compatible donor</span></div>
+          <div class="match-row"><span class="match-name">Lalitha</span><span class="match-info">O− · HLA-A3 · No compatible donor</span></div>
+        </div>
+      </div>
+      <div class="section-title">Heart Donors <span class="tag green">5 Registered</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Hospital</th><th>Medical History</th><th>Match</th></tr></thead>
+        <tbody>
+          <tr><td>Vikram Singh</td><td>29</td><td><span class="gender-badge M">M</span></td><td>Singanallur</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-C1</span></td><td>Ganga Hospital</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Rahul Das</td><td>35</td><td><span class="gender-badge M">M</span></td><td>Town Hall</td><td><span class="blood-badge bg-bn">B−</span></td><td><span class="tissue-tag">HLA-A4</span></td><td>Ganga Hospital</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Sandeep</td><td>30</td><td><span class="gender-badge M">M</span></td><td>Singanallur</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-C2</span></td><td>Ganga Hospital</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Ravi Kumar</td><td>28</td><td><span class="gender-badge M">M</span></td><td>RS Puram</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B1</span></td><td>KMCH</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Praveen</td><td>31</td><td><span class="gender-badge M">M</span></td><td>Ukkadam</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-C2</span></td><td>PSG Hospitals</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+        </tbody></table>
+      </div>
+      <div class="section-title">Heart Recipients <span class="tag red">7 Awaiting</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Medical History</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Anita Das</td><td>50</td><td><span class="gender-badge F">F</span></td><td>Ukkadam</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-C1</span></td><td><span class="history-badge">Heart failure</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Pooja Sharma</td><td>47</td><td><span class="gender-badge F">F</span></td><td>Saravanampatti</td><td><span class="blood-badge bg-bn">B−</span></td><td><span class="tissue-tag">HLA-A4</span></td><td><span class="history-badge">Heart failure</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Nisha</td><td>48</td><td><span class="gender-badge F">F</span></td><td>Ukkadam</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-C2</span></td><td><span class="history-badge">Heart failure</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Kavitha</td><td>45</td><td><span class="gender-badge F">F</span></td><td>Gandhipuram</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B1</span></td><td><span class="history-badge">Heart failure</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Sudha</td><td>52</td><td><span class="gender-badge F">F</span></td><td>RS Puram</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-C2</span></td><td><span class="history-badge">Heart failure</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Geetha</td><td>49</td><td><span class="gender-badge F">F</span></td><td>Peelamedu</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-D3</span></td><td><span class="history-badge">Heart failure</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+          <tr><td>Lalitha</td><td>53</td><td><span class="gender-badge F">F</span></td><td>Town Hall</td><td><span class="blood-badge bg-on">O−</span></td><td><span class="tissue-tag">HLA-A3</span></td><td><span class="history-badge">Heart failure</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- ====== KIDNEY PAGE ====== -->
+    <div class="page" id="page-kidney">
+      <div class="stats-strip">
+        <div class="stat-box"><div class="stat-box-label">Donors</div><div class="stat-box-value green">6</div><div class="stat-box-sub">Kidney donors</div></div>
+        <div class="stat-box"><div class="stat-box-label">Recipients</div><div class="stat-box-value red">10</div><div class="stat-box-sub">Awaiting kidney</div></div>
+        <div class="stat-box"><div class="stat-box-label">Matched</div><div class="stat-box-value blue">6</div><div class="stat-box-sub">Compatible pairs</div></div>
+        <div class="stat-box"><div class="stat-box-label">Shortage</div><div class="stat-box-value orange">4</div><div class="stat-box-sub">Unmet recipients</div></div>
+      </div>
+      <div class="match-grid">
+        <div class="match-card">
+          <div class="match-card-title">✅ Matched Pairs</div>
+          <div class="match-row"><span class="match-name">Arun Kumar</span><span class="match-arrow">→</span><span class="match-name">Meena Ravi</span><span style="font-size:11px;color:#66bb6a">O+ · HLA-A1</span></div>
+          <div class="match-row"><span class="match-name">Karthik Raj</span><span class="match-arrow">→</span><span class="match-name">Divya Menon</span><span style="font-size:11px;color:#66bb6a">B+ · HLA-A3</span></div>
+          <div class="match-row"><span class="match-name">Ajay</span><span class="match-arrow">→</span><span class="match-name">Rekha</span><span style="font-size:11px;color:#66bb6a">O+ · HLA-A1</span></div>
+          <div class="match-row"><span class="match-name">Sunil</span><span class="match-arrow">→</span><span class="match-name">Usha</span><span style="font-size:11px;color:#66bb6a">A+ · HLA-B2</span></div>
+          <div class="match-row"><span class="match-name">Manoj</span><span class="match-arrow">→</span><span class="match-name">Kaveri</span><span style="font-size:11px;color:#66bb6a">AB+ · HLA-D2</span></div>
+          <div class="match-row"><span class="match-name">Dinesh</span><span class="match-arrow">→</span><span class="match-name">Savitha</span><span style="font-size:11px;color:#66bb6a">B+ · HLA-A3</span></div>
+        </div>
+        <div class="match-card">
+          <div class="match-card-title">⚠ Unmatched Recipients</div>
+          <div class="match-row"><span class="match-name">Padma</span><span class="match-info">O− · HLA-C1 · No compatible donor</span></div>
+          <div class="match-row"><span class="match-name">Kamala</span><span class="match-info">AB− · HLA-D3 · No compatible donor</span></div>
+          <div class="match-row"><span class="match-name">Vimala</span><span class="match-info">A− · HLA-B3 · No compatible donor</span></div>
+          <div class="match-row"><span class="match-name">Saroja</span><span class="match-info">B− · HLA-A5 · No compatible donor</span></div>
+        </div>
+      </div>
+      <div class="section-title">Kidney Donors <span class="tag green">6 Registered</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Hospital</th><th>Medical History</th><th>Match</th></tr></thead>
+        <tbody>
+          <tr><td>Arun Kumar</td><td>34</td><td><span class="gender-badge M">M</span></td><td>RS Puram</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-A1</span></td><td>KMCH</td><td><span class="history-badge">Hypertension</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Karthik Raj</td><td>31</td><td><span class="gender-badge M">M</span></td><td>Peelamedu</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-A3</span></td><td>PSG Hospitals</td><td><span class="history-badge">Hypertension</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Ajay</td><td>32</td><td><span class="gender-badge M">M</span></td><td>RS Puram</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-A1</span></td><td>PSG Hospitals</td><td><span class="history-badge">Hypertension</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Sunil</td><td>33</td><td><span class="gender-badge M">M</span></td><td>Ganapathy</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B2</span></td><td>KMCH</td><td><span class="history-badge">Hypertension</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Manoj</td><td>35</td><td><span class="gender-badge M">M</span></td><td>Ukkadam</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-D2</span></td><td>Royal Care</td><td><span class="history-badge">Injury</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Dinesh</td><td>30</td><td><span class="gender-badge M">M</span></td><td>Saibaba Colony</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-A3</span></td><td>Ganga Hospital</td><td><span class="history-badge">Hypertension</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+        </tbody></table>
+      </div>
+      <div class="section-title">Kidney Recipients <span class="tag red">10 Awaiting</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Medical History</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Meena Ravi</td><td>45</td><td><span class="gender-badge F">F</span></td><td>Peelamedu</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-A1</span></td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Divya Menon</td><td>44</td><td><span class="gender-badge F">F</span></td><td>RS Puram</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-A3</span></td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Rekha</td><td>43</td><td><span class="gender-badge F">F</span></td><td>Peelamedu</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-A1</span></td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Usha</td><td>46</td><td><span class="gender-badge F">F</span></td><td>Ganapathy</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B2</span></td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Kaveri</td><td>42</td><td><span class="gender-badge F">F</span></td><td>Race Course</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-D2</span></td><td><span class="history-badge">Kidney failure</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Savitha</td><td>47</td><td><span class="gender-badge F">F</span></td><td>Saibaba Colony</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-A3</span></td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Padma</td><td>50</td><td><span class="gender-badge F">F</span></td><td>Town Hall</td><td><span class="blood-badge bg-on">O−</span></td><td><span class="tissue-tag">HLA-C1</span></td><td><span class="history-badge">Kidney failure</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+          <tr><td>Kamala</td><td>48</td><td><span class="gender-badge F">F</span></td><td>Singanallur</td><td><span class="blood-badge bg-abn">AB−</span></td><td><span class="tissue-tag">HLA-D3</span></td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+          <tr><td>Vimala</td><td>51</td><td><span class="gender-badge F">F</span></td><td>Gandhipuram</td><td><span class="blood-badge bg-an">A−</span></td><td><span class="tissue-tag">HLA-B3</span></td><td><span class="history-badge">Kidney failure</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+          <tr><td>Saroja</td><td>53</td><td><span class="gender-badge F">F</span></td><td>Ukkadam</td><td><span class="blood-badge bg-bn">B−</span></td><td><span class="tissue-tag">HLA-A5</span></td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- ====== LIVER PAGE ====== -->
+    <div class="page" id="page-liver">
+      <div class="stats-strip">
+        <div class="stat-box"><div class="stat-box-label">Donors</div><div class="stat-box-value green">6</div><div class="stat-box-sub">Liver donors</div></div>
+        <div class="stat-box"><div class="stat-box-label">Recipients</div><div class="stat-box-value red">8</div><div class="stat-box-sub">Awaiting liver</div></div>
+        <div class="stat-box"><div class="stat-box-label">Matched</div><div class="stat-box-value blue">6</div><div class="stat-box-sub">Compatible pairs</div></div>
+        <div class="stat-box"><div class="stat-box-label">Shortage</div><div class="stat-box-value orange">2</div><div class="stat-box-sub">Unmet recipients</div></div>
+      </div>
+      <div class="match-grid">
+        <div class="match-card">
+          <div class="match-card-title">✅ Matched Pairs</div>
+          <div class="match-row"><span class="match-name">Suresh Babu</span><span class="match-arrow">→</span><span class="match-name">Priya Nair</span><span style="font-size:11px;color:#66bb6a">A+ · HLA-B2</span></div>
+          <div class="match-row"><span class="match-name">Deepak Verma</span><span class="match-arrow">→</span><span class="match-name">Sneha Reddy</span><span style="font-size:11px;color:#66bb6a">AB+ · HLA-D2</span></div>
+          <div class="match-row"><span class="match-name">Manisha</span><span class="match-arrow">→</span><span class="match-name">Neha</span><span style="font-size:11px;color:#66bb6a">A+ · HLA-B2</span></div>
+          <div class="match-row"><span class="match-name">Rajan</span><span class="match-arrow">→</span><span class="match-name">Meenakshi</span><span style="font-size:11px;color:#66bb6a">O+ · HLA-C1</span></div>
+          <div class="match-row"><span class="match-name">Balu</span><span class="match-arrow">→</span><span class="match-name">Revathi</span><span style="font-size:11px;color:#66bb6a">B+ · HLA-A2</span></div>
+          <div class="match-row"><span class="match-name">Senthil</span><span class="match-arrow">→</span><span class="match-name">Saranya</span><span style="font-size:11px;color:#66bb6a">AB+ · HLA-D2</span></div>
+        </div>
+        <div class="match-card">
+          <div class="match-card-title">⚠ Unmatched Recipients</div>
+          <div class="match-row"><span class="match-name">Hema</span><span class="match-info">O− · HLA-C3 · No compatible donor</span></div>
+          <div class="match-row"><span class="match-name">Vanitha</span><span class="match-info">A− · HLA-B4 · No compatible donor</span></div>
+        </div>
+      </div>
+      <div class="section-title">Liver Donors <span class="tag green">6 Registered</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Hospital</th><th>Medical History</th><th>Match</th></tr></thead>
+        <tbody>
+          <tr><td>Suresh Babu</td><td>40</td><td><span class="gender-badge M">M</span></td><td>Saibaba Colony</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B2</span></td><td>PSG Hospitals</td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Deepak Verma</td><td>39</td><td><span class="gender-badge M">M</span></td><td>Race Course</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-D2</span></td><td>Royal Care</td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Manisha</td><td>41</td><td><span class="gender-badge F">F</span></td><td>Gandhipuram</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B2</span></td><td>KMCH</td><td><span class="history-badge">Injury</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Rajan</td><td>38</td><td><span class="gender-badge M">M</span></td><td>Ukkadam</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-C1</span></td><td>KMCH</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Balu</td><td>42</td><td><span class="gender-badge M">M</span></td><td>Peelamedu</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-A2</span></td><td>PSG Hospitals</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Senthil</td><td>37</td><td><span class="gender-badge M">M</span></td><td>Singanallur</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-D2</span></td><td>Ganga Hospital</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+        </tbody></table>
+      </div>
+      <div class="section-title">Liver Recipients <span class="tag red">8 Awaiting</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Medical History</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Priya Nair</td><td>38</td><td><span class="gender-badge F">F</span></td><td>Gandhipuram</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B2</span></td><td><span class="history-badge">Liver damage</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Sneha Reddy</td><td>41</td><td><span class="gender-badge F">F</span></td><td>Ganapathy</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-D2</span></td><td><span class="history-badge">Liver damage</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Neha</td><td>39</td><td><span class="gender-badge F">F</span></td><td>Saibaba Colony</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B2</span></td><td><span class="history-badge">Liver damage</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Meenakshi</td><td>44</td><td><span class="gender-badge F">F</span></td><td>Town Hall</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-C1</span></td><td><span class="history-badge">Liver damage</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Revathi</td><td>40</td><td><span class="gender-badge F">F</span></td><td>RS Puram</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-A2</span></td><td><span class="history-badge">Liver damage</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Saranya</td><td>36</td><td><span class="gender-badge F">F</span></td><td>Race Course</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-D2</span></td><td><span class="history-badge">Liver damage</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Hema</td><td>43</td><td><span class="gender-badge F">F</span></td><td>Ukkadam</td><td><span class="blood-badge bg-on">O−</span></td><td><span class="tissue-tag">HLA-C3</span></td><td><span class="history-badge">Liver damage</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+          <tr><td>Vanitha</td><td>45</td><td><span class="gender-badge F">F</span></td><td>Peelamedu</td><td><span class="blood-badge bg-an">A−</span></td><td><span class="tissue-tag">HLA-B4</span></td><td><span class="history-badge">Liver cirrhosis</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- ====== LUNGS PAGE ====== -->
+    <div class="page" id="page-lungs">
+      <div class="stats-strip">
+        <div class="stat-box"><div class="stat-box-label">Donors</div><div class="stat-box-value green">3</div><div class="stat-box-sub">Lung donors</div></div>
+        <div class="stat-box"><div class="stat-box-label">Recipients</div><div class="stat-box-value red">4</div><div class="stat-box-sub">Awaiting lungs</div></div>
+        <div class="stat-box"><div class="stat-box-label">Matched</div><div class="stat-box-value blue">3</div><div class="stat-box-sub">Compatible pairs</div></div>
+        <div class="stat-box"><div class="stat-box-label">Shortage</div><div class="stat-box-value orange">1</div><div class="stat-box-sub">Unmet recipients</div></div>
+      </div>
+      <div class="match-grid">
+        <div class="match-card">
+          <div class="match-card-title">✅ Matched Pairs</div>
+          <div class="match-row"><span class="match-name">Rohit Sharma</span><span class="match-arrow">→</span><span class="match-name">Kavya Iyer</span><span style="font-size:11px;color:#66bb6a">AB+ · HLA-A2</span></div>
+          <div class="match-row"><span class="match-name">Arvind</span><span class="match-arrow">→</span><span class="match-name">Kavita</span><span style="font-size:11px;color:#66bb6a">AB+ · HLA-A2</span></div>
+          <div class="match-row"><span class="match-name">Mohit</span><span class="match-arrow">→</span><span class="match-name">Ritu</span><span style="font-size:11px;color:#66bb6a">AB+ · HLA-A2</span></div>
+        </div>
+        <div class="match-card">
+          <div class="match-card-title">⚠ Unmatched Recipients</div>
+          <div class="match-row"><span class="match-name">Sujatha</span><span class="match-info">B+ · HLA-C3 · No compatible donor</span></div>
+        </div>
+      </div>
+      <div class="section-title">Lungs Donors <span class="tag green">3 Registered</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Hospital</th><th>Medical History</th><th>Match</th></tr></thead>
+        <tbody>
+          <tr><td>Rohit Sharma</td><td>36</td><td><span class="gender-badge M">M</span></td><td>Saravanampatti</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-A2</span></td><td>Royal Care Hospital</td><td><span class="history-badge">Hypertension</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Arvind</td><td>36</td><td><span class="gender-badge M">M</span></td><td>Saravanampatti</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-A2</span></td><td>Royal Care Hospital</td><td><span class="history-badge">Obesity</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Mohit</td><td>37</td><td><span class="gender-badge M">M</span></td><td>Saravanampatti</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-A2</span></td><td>KMCH</td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+        </tbody></table>
+      </div>
+      <div class="section-title">Lungs Recipients <span class="tag red">4 Awaiting</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Medical History</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Kavya Iyer</td><td>42</td><td><span class="gender-badge M">M</span></td><td>Race Course</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-A2</span></td><td><span class="history-badge">Liver cancer</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Kavita</td><td>45</td><td><span class="gender-badge F">F</span></td><td>Race Course</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-A2</span></td><td><span class="history-badge">Liver cancer</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Ritu</td><td>44</td><td><span class="gender-badge F">F</span></td><td>Race Course</td><td><span class="blood-badge bg-abp">AB+</span></td><td><span class="tissue-tag">HLA-A2</span></td><td><span class="history-badge">Liver cancer</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Sujatha</td><td>46</td><td><span class="gender-badge F">F</span></td><td>Ganapathy</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-C3</span></td><td><span class="history-badge">Lung fibrosis</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- ====== EYES PAGE ====== -->
+    <div class="page" id="page-eyes">
+      <div class="stats-strip">
+        <div class="stat-box"><div class="stat-box-label">Donors</div><div class="stat-box-value green">4</div><div class="stat-box-sub">Eye donors</div></div>
+        <div class="stat-box"><div class="stat-box-label">Recipients</div><div class="stat-box-value red">5</div><div class="stat-box-sub">Awaiting cornea</div></div>
+        <div class="stat-box"><div class="stat-box-label">Matched</div><div class="stat-box-value blue">4</div><div class="stat-box-sub">Compatible pairs</div></div>
+        <div class="stat-box"><div class="stat-box-label">Shortage</div><div class="stat-box-value orange">1</div><div class="stat-box-sub">Unmet recipients</div></div>
+      </div>
+      <div class="match-grid">
+        <div class="match-card">
+          <div class="match-card-title">✅ Matched Pairs</div>
+          <div class="match-row"><span class="match-name">Lakshmi Devi</span><span class="match-arrow">→</span><span class="match-name">Ramesh Pillai</span><span style="font-size:11px;color:#66bb6a">O+ · HLA-D1</span></div>
+          <div class="match-row"><span class="match-name">Sunita</span><span class="match-arrow">→</span><span class="match-name">Mohan</span><span style="font-size:11px;color:#66bb6a">B+ · HLA-C1</span></div>
+          <div class="match-row"><span class="match-name">Meera</span><span class="match-arrow">→</span><span class="match-name">Rajesh</span><span style="font-size:11px;color:#66bb6a">B− · HLA-A4</span></div>
+          <div class="match-row"><span class="match-name">Kamakshi</span><span class="match-arrow">→</span><span class="match-name">Velu</span><span style="font-size:11px;color:#66bb6a">A+ · HLA-B1</span></div>
+        </div>
+        <div class="match-card">
+          <div class="match-card-title">⚠ Unmatched Recipients</div>
+          <div class="match-row"><span class="match-name">Krishnan</span><span class="match-info">AB− · HLA-D4 · No compatible donor</span></div>
+        </div>
+      </div>
+      <div class="section-title">Eyes Donors <span class="tag green">4 Registered</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>NGO</th><th>Medical History</th><th>Match</th></tr></thead>
+        <tbody>
+          <tr><td>Lakshmi Devi</td><td>55</td><td><span class="gender-badge F">F</span></td><td>Ganapathy</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-D1</span></td><td>MOHAN Foundation</td><td><span class="history-badge">Alive</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Sunita</td><td>58</td><td><span class="gender-badge F">F</span></td><td>Ganapathy</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-C1</span></td><td>MOHAN Foundation</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Meera</td><td>56</td><td><span class="gender-badge F">F</span></td><td>Ganapathy</td><td><span class="blood-badge bg-bn">B−</span></td><td><span class="tissue-tag">HLA-A4</span></td><td>MOHAN Foundation</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Kamakshi</td><td>54</td><td><span class="gender-badge F">F</span></td><td>Town Hall</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B1</span></td><td>MOHAN Foundation</td><td><span class="history-badge">Alive</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+        </tbody></table>
+      </div>
+      <div class="section-title">Eyes Recipients <span class="tag red">5 Awaiting</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Medical History</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Ramesh Pillai</td><td>60</td><td><span class="gender-badge M">M</span></td><td>Town Hall</td><td><span class="blood-badge bg-op">O+</span></td><td><span class="tissue-tag">HLA-D1</span></td><td><span class="history-badge">Glaucoma</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Mohan</td><td>61</td><td><span class="gender-badge M">M</span></td><td>Town Hall</td><td><span class="blood-badge bg-bp">B+</span></td><td><span class="tissue-tag">HLA-C1</span></td><td><span class="history-badge">Glaucoma</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Rajesh</td><td>63</td><td><span class="gender-badge M">M</span></td><td>Town Hall</td><td><span class="blood-badge bg-bn">B−</span></td><td><span class="tissue-tag">HLA-A4</span></td><td><span class="history-badge">Glaucoma</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Velu</td><td>65</td><td><span class="gender-badge M">M</span></td><td>Ganapathy</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B1</span></td><td><span class="history-badge">Cataract</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Krishnan</td><td>62</td><td><span class="gender-badge M">M</span></td><td>RS Puram</td><td><span class="blood-badge bg-abn">AB−</span></td><td><span class="tissue-tag">HLA-D4</span></td><td><span class="history-badge">Glaucoma</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- ====== PANCREAS PAGE ====== -->
+    <div class="page" id="page-pancreas">
+      <div class="stats-strip">
+        <div class="stat-box"><div class="stat-box-label">Donors</div><div class="stat-box-value green">3</div><div class="stat-box-sub">Pancreas donors</div></div>
+        <div class="stat-box"><div class="stat-box-label">Recipients</div><div class="stat-box-value red">3</div><div class="stat-box-sub">Awaiting pancreas</div></div>
+        <div class="stat-box"><div class="stat-box-label">Matched</div><div class="stat-box-value blue">3</div><div class="stat-box-sub">100% match rate</div></div>
+        <div class="stat-box"><div class="stat-box-label">Shortage</div><div class="stat-box-value green">0</div><div class="stat-box-sub">Fully covered</div></div>
+      </div>
+      <div class="match-grid">
+        <div class="match-card">
+          <div class="match-card-title">✅ All Pairs Matched</div>
+          <div class="match-row"><span class="match-name">Naveen Kumar</span><span class="match-arrow">→</span><span class="match-name">Shalini Gupta</span><span style="font-size:11px;color:#66bb6a">A− · HLA-B1</span></div>
+          <div class="match-row"><span class="match-name">Gopal</span><span class="match-arrow">→</span><span class="match-name">Lata</span><span style="font-size:11px;color:#66bb6a">O− · HLA-D1</span></div>
+          <div class="match-row"><span class="match-name">Varun</span><span class="match-arrow">→</span><span class="match-name">Anita</span><span style="font-size:11px;color:#66bb6a">O− · HLA-D1</span></div>
+        </div>
+        <div class="match-card">
+          <div class="match-card-title">🎉 Registry Status</div>
+          <div style="display:flex;align-items:center;justify-content:center;height:80px;flex-direction:column;gap:6px">
+            <div style="font-size:28px">✅</div>
+            <div style="color:#66bb6a;font-family:'Syne',sans-serif;font-weight:700">All recipients matched</div>
+            <div style="font-size:12px;color:var(--muted)">Pancreas registry is fully covered</div>
+          </div>
+        </div>
+      </div>
+      <div class="section-title">Pancreas Donors <span class="tag green">3 Registered</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>NGO / Hospital</th><th>Medical History</th><th>Match</th></tr></thead>
+        <tbody>
+          <tr><td>Naveen Kumar</td><td>37</td><td><span class="gender-badge M">M</span></td><td>Gandhipuram</td><td><span class="blood-badge bg-an">A−</span></td><td><span class="tissue-tag">HLA-B1</span></td><td>MOHAN Foundation</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Gopal</td><td>49</td><td><span class="gender-badge M">M</span></td><td>Ukkadam</td><td><span class="blood-badge bg-on">O−</span></td><td><span class="tissue-tag">HLA-D1</span></td><td>MOHAN Foundation</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Varun</td><td>45</td><td><span class="gender-badge M">M</span></td><td>Ukkadam</td><td><span class="blood-badge bg-on">O−</span></td><td><span class="tissue-tag">HLA-D1</span></td><td>MOHAN Foundation</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+        </tbody></table>
+      </div>
+      <div class="section-title">Pancreas Recipients <span class="tag green">3 All Matched</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Medical History</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Shalini Gupta</td><td>48</td><td><span class="gender-badge F">F</span></td><td>Saibaba Colony</td><td><span class="blood-badge bg-an">A−</span></td><td><span class="tissue-tag">HLA-B1</span></td><td><span class="history-badge">Pancreatic cancer</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Lata</td><td>50</td><td><span class="gender-badge F">F</span></td><td>Singanallur</td><td><span class="blood-badge bg-on">O−</span></td><td><span class="tissue-tag">HLA-D1</span></td><td><span class="history-badge">Pancreatic cancer</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Anita</td><td>49</td><td><span class="gender-badge F">F</span></td><td>Singanallur</td><td><span class="blood-badge bg-on">O−</span></td><td><span class="tissue-tag">HLA-D1</span></td><td><span class="history-badge">Pancreatic cancer</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- ====== INTESTINE PAGE ====== -->
+    <div class="page" id="page-intestine">
+      <div class="stats-strip">
+        <div class="stat-box"><div class="stat-box-label">Donors</div><div class="stat-box-value green">3</div><div class="stat-box-sub">Intestine donors</div></div>
+        <div class="stat-box"><div class="stat-box-label">Recipients</div><div class="stat-box-value red">4</div><div class="stat-box-sub">Awaiting intestine</div></div>
+        <div class="stat-box"><div class="stat-box-label">Matched</div><div class="stat-box-value blue">3</div><div class="stat-box-sub">Compatible pairs</div></div>
+        <div class="stat-box"><div class="stat-box-label">Shortage</div><div class="stat-box-value orange">1</div><div class="stat-box-sub">Unmet recipient</div></div>
+      </div>
+      <div class="match-grid">
+        <div class="match-card">
+          <div class="match-card-title">✅ Matched Pairs</div>
+          <div class="match-row"><span class="match-name">Prakash Iyer</span><span class="match-arrow">→</span><span class="match-name">Aruna Nair</span><span style="font-size:11px;color:#66bb6a">O− · HLA-C2</span></div>
+          <div class="match-row"><span class="match-name">Vijay</span><span class="match-arrow">→</span><span class="match-name">Shweta</span><span style="font-size:11px;color:#66bb6a">AB− · HLA-D2</span></div>
+          <div class="match-row"><span class="match-name">Amit</span><span class="match-arrow">→</span><span class="match-name">Preeti</span><span style="font-size:11px;color:#66bb6a">AB− · HLA-D2</span></div>
+        </div>
+        <div class="match-card">
+          <div class="match-card-title">⚠ Unmatched Recipients</div>
+          <div class="match-row"><span class="match-name">Geeta</span><span class="match-info">A+ · HLA-B3 · No compatible donor</span></div>
+        </div>
+      </div>
+      <div class="section-title">Intestine Donors <span class="tag green">3 Registered</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>NGO / Hospital</th><th>Medical History</th><th>Match</th></tr></thead>
+        <tbody>
+          <tr><td>Prakash Iyer</td><td>46</td><td><span class="gender-badge M">M</span></td><td>Ukkadam</td><td><span class="blood-badge bg-on">O−</span></td><td><span class="tissue-tag">HLA-C2</span></td><td>KMCH</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Vijay</td><td>44</td><td><span class="gender-badge M">M</span></td><td>RS Puram</td><td><span class="blood-badge bg-abn">AB−</span></td><td><span class="tissue-tag">HLA-D2</span></td><td>KMCH</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Amit</td><td>46</td><td><span class="gender-badge M">M</span></td><td>Saravanampatti</td><td><span class="blood-badge bg-abn">AB−</span></td><td><span class="tissue-tag">HLA-D2</span></td><td>Royal Care Hospital</td><td><span class="history-badge">Brain dead</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+        </tbody></table>
+      </div>
+      <div class="section-title">Intestine Recipients <span class="tag red">4 Awaiting</span></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Area</th><th>Blood Group</th><th>Tissue Type</th><th>Medical History</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Aruna Nair</td><td>52</td><td><span class="gender-badge F">F</span></td><td>Singanallur</td><td><span class="blood-badge bg-on">O−</span></td><td><span class="tissue-tag">HLA-C2</span></td><td><span class="history-badge">Obesity</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Shweta</td><td>46</td><td><span class="gender-badge F">F</span></td><td>Peelamedu</td><td><span class="blood-badge bg-abn">AB−</span></td><td><span class="tissue-tag">HLA-D2</span></td><td><span class="history-badge">Obesity</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Preeti</td><td>48</td><td><span class="gender-badge F">F</span></td><td>Race Course</td><td><span class="blood-badge bg-abn">AB−</span></td><td><span class="tissue-tag">HLA-D2</span></td><td><span class="history-badge">Diabetic</span></td><td><span class="matched-badge yes">Matched</span></td></tr>
+          <tr><td>Geeta</td><td>50</td><td><span class="gender-badge F">F</span></td><td>Gandhipuram</td><td><span class="blood-badge bg-ap">A+</span></td><td><span class="tissue-tag">HLA-B3</span></td><td><span class="history-badge">Bowel disease</span></td><td><span class="matched-badge no">Unmatched</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+// Set date
+document.getElementById('datebadge').textContent = new Date().toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+
+const pageTitles = {
+  overview: ['Registry Dashboard', 'Coimbatore District · All Organs Overview'],
+  heart: ['Heart Registry', '🫀 Donors & Recipients · Cardiac Transplant Program'],
+  kidney: ['Kidney Registry', '🫘 Donors & Recipients · Renal Transplant Program'],
+  liver: ['Liver Registry', '🟤 Donors & Recipients · Hepatic Transplant Program'],
+  lungs: ['Lungs Registry', '🫁 Donors & Recipients · Pulmonary Transplant Program'],
+  eyes: ['Eyes Registry', '👁 Donors & Recipients · Corneal Transplant Program'],
+  pancreas: ['Pancreas Registry', '🔶 Donors & Recipients · Pancreatic Transplant Program'],
+  intestine: ['Intestine Registry', '🌀 Donors & Recipients · Intestinal Transplant Program'],
+};
+
+let currentNavItem = document.querySelector('.nav-item.active');
+
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (currentNavItem) currentNavItem.classList.remove('active');
+  if (navEl) { navEl.classList.add('active'); currentNavItem = navEl; }
+  else {
+    const match = [...document.querySelectorAll('.nav-item')].find(el => el.onclick && el.onclick.toString().includes("'" + id + "'"));
+    if (match) { match.classList.add('active'); currentNavItem = match; }
+  }
+  document.getElementById('page-title').textContent = pageTitles[id][0];
+  document.getElementById('page-subtitle').textContent = pageTitles[id][1];
+  // highlight organ panel card
+  document.querySelectorAll('.organ-card').forEach(c => c.classList.remove('selected'));
+  const cards = document.querySelectorAll('.organ-card');
+  const names = ['heart','kidney','liver','lungs','eyes','pancreas','intestine'];
+  const idx = names.indexOf(id);
+  if (idx >= 0) cards[idx].classList.add('selected');
+}
+
+// Build all-donors table
+const allDonors = [
+  {name:'Vikram Singh',organ:'Heart',emoji:'🫀',color:'#ef5350',age:29,gender:'M',blood:'B+',bc:'bg-bp',tissue:'HLA-C1',area:'Singanallur',facility:'Ganga Hospital'},
+  {name:'Rahul Das',organ:'Heart',emoji:'🫀',color:'#ef5350',age:35,gender:'M',blood:'B−',bc:'bg-bn',tissue:'HLA-A4',area:'Town Hall',facility:'Ganga Hospital'},
+  {name:'Sandeep',organ:'Heart',emoji:'🫀',color:'#ef5350',age:30,gender:'M',blood:'O+',bc:'bg-op',tissue:'HLA-C2',area:'Singanallur',facility:'Ganga Hospital'},
+  {name:'Ravi Kumar',organ:'Heart',emoji:'🫀',color:'#ef5350',age:28,gender:'M',blood:'A+',bc:'bg-ap',tissue:'HLA-B1',area:'RS Puram',facility:'KMCH'},
+  {name:'Praveen',organ:'Heart',emoji:'🫀',color:'#ef5350',age:31,gender:'M',blood:'O+',bc:'bg-op',tissue:'HLA-C2',area:'Ukkadam',facility:'PSG Hospitals'},
+  {name:'Arun Kumar',organ:'Kidney',emoji:'🫘',color:'#42a5f5',age:34,gender:'M',blood:'O+',bc:'bg-op',tissue:'HLA-A1',area:'RS Puram',facility:'KMCH'},
+  {name:'Karthik Raj',organ:'Kidney',emoji:'🫘',color:'#42a5f5',age:31,gender:'M',blood:'B+',bc:'bg-bp',tissue:'HLA-A3',area:'Peelamedu',facility:'PSG Hospitals'},
+  {name:'Ajay',organ:'Kidney',emoji:'🫘',color:'#42a5f5',age:32,gender:'M',blood:'O+',bc:'bg-op',tissue:'HLA-A1',area:'RS Puram',facility:'PSG Hospitals'},
+  {name:'Sunil',organ:'Kidney',emoji:'🫘',color:'#42a5f5',age:33,gender:'M',blood:'A+',bc:'bg-ap',tissue:'HLA-B2',area:'Ganapathy',facility:'KMCH'},
+  {name:'Manoj',organ:'Kidney',emoji:'🫘',color:'#42a5f5',age:35,gender:'M',blood:'AB+',bc:'bg-abp',tissue:'HLA-D2',area:'Ukkadam',facility:'Royal Care'},
+  {name:'Dinesh',organ:'Kidney',emoji:'🫘',color:'#42a5f5',age:30,gender:'M',blood:'B+',bc:'bg-bp',tissue:'HLA-A3',area:'Saibaba Colony',facility:'Ganga Hospital'},
+  {name:'Suresh Babu',organ:'Liver',emoji:'🟤',color:'#a5d6a7',age:40,gender:'M',blood:'A+',bc:'bg-ap',tissue:'HLA-B2',area:'Saibaba Colony',facility:'PSG Hospitals'},
+  {name:'Deepak Verma',organ:'Liver',emoji:'🟤',color:'#a5d6a7',age:39,gender:'M',blood:'AB+',bc:'bg-abp',tissue:'HLA-D2',area:'Race Course',facility:'Royal Care'},
+  {name:'Manisha',organ:'Liver',emoji:'🟤',color:'#a5d6a7',age:41,gender:'F',blood:'A+',bc:'bg-ap',tissue:'HLA-B2',area:'Gandhipuram',facility:'KMCH'},
+  {name:'Rajan',organ:'Liver',emoji:'🟤',color:'#a5d6a7',age:38,gender:'M',blood:'O+',bc:'bg-op',tissue:'HLA-C1',area:'Ukkadam',facility:'KMCH'},
+  {name:'Balu',organ:'Liver',emoji:'🟤',color:'#a5d6a7',age:42,gender:'M',blood:'B+',bc:'bg-bp',tissue:'HLA-A2',area:'Peelamedu',facility:'PSG Hospitals'},
+  {name:'Senthil',organ:'Liver',emoji:'🟤',color:'#a5d6a7',age:37,gender:'M',blood:'AB+',bc:'bg-abp',tissue:'HLA-D2',area:'Singanallur',facility:'Ganga Hospital'},
+  {name:'Rohit Sharma',organ:'Lungs',emoji:'🫁',color:'#80cbc4',age:36,gender:'M',blood:'AB+',bc:'bg-abp',tissue:'HLA-A2',area:'Saravanampatti',facility:'Royal Care Hospital'},
+  {name:'Arvind',organ:'Lungs',emoji:'🫁',color:'#80cbc4',age:36,gender:'M',blood:'AB+',bc:'bg-abp',tissue:'HLA-A2',area:'Saravanampatti',facility:'Royal Care Hospital'},
+  {name:'Mohit',organ:'Lungs',emoji:'🫁',color:'#80cbc4',age:37,gender:'M',blood:'AB+',bc:'bg-abp',tissue:'HLA-A2',area:'Saravanampatti',facility:'KMCH'},
+  {name:'Lakshmi Devi',organ:'Eyes',emoji:'👁',color:'#ce93d8',age:55,gender:'F',blood:'O+',bc:'bg-op',tissue:'HLA-D1',area:'Ganapathy',facility:'MOHAN Foundation'},
+  {name:'Sunita',organ:'Eyes',emoji:'👁',color:'#ce93d8',age:58,gender:'F',blood:'B+',bc:'bg-bp',tissue:'HLA-C1',area:'Ganapathy',facility:'MOHAN Foundation'},
+  {name:'Meera',organ:'Eyes',emoji:'👁',color:'#ce93d8',age:56,gender:'F',blood:'B−',bc:'bg-bn',tissue:'HLA-A4',area:'Ganapathy',facility:'MOHAN Foundation'},
+  {name:'Kamakshi',organ:'Eyes',emoji:'👁',color:'#ce93d8',age:54,gender:'F',blood:'A+',bc:'bg-ap',tissue:'HLA-B1',area:'Town Hall',facility:'MOHAN Foundation'},
+  {name:'Naveen Kumar',organ:'Pancreas',emoji:'🔶',color:'#ffcc80',age:37,gender:'M',blood:'A−',bc:'bg-an',tissue:'HLA-B1',area:'Gandhipuram',facility:'MOHAN Foundation'},
+  {name:'Gopal',organ:'Pancreas',emoji:'🔶',color:'#ffcc80',age:49,gender:'M',blood:'O−',bc:'bg-on',tissue:'HLA-D1',area:'Ukkadam',facility:'MOHAN Foundation'},
+  {name:'Varun',organ:'Pancreas',emoji:'🔶',color:'#ffcc80',age:45,gender:'M',blood:'O−',bc:'bg-on',tissue:'HLA-D1',area:'Ukkadam',facility:'MOHAN Foundation'},
+  {name:'Prakash Iyer',organ:'Intestine',emoji:'🌀',color:'#f48fb1',age:46,gender:'M',blood:'O−',bc:'bg-on',tissue:'HLA-C2',area:'Ukkadam',facility:'KMCH'},
+  {name:'Vijay',organ:'Intestine',emoji:'🌀',color:'#f48fb1',age:44,gender:'M',blood:'AB−',bc:'bg-abn',tissue:'HLA-D2',area:'RS Puram',facility:'KMCH'},
+  {name:'Amit',organ:'Intestine',emoji:'🌀',color:'#f48fb1',age:46,gender:'M',blood:'AB−',bc:'bg-abn',tissue:'HLA-D2',area:'Saravanampatti',facility:'Royal Care Hospital'},
+];
+
+const tbody = document.getElementById('all-donors-table');
+allDonors.forEach(d => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="font-weight:500">${d.name}</td>
+    <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;background:rgba(255,255,255,0.05);border-radius:6px;padding:3px 8px"><span>${d.emoji}</span>${d.organ}</span></td>
+    <td>${d.age}</td>
+    <td><span class="gender-badge ${d.gender}">${d.gender}</span></td>
+    <td><span class="blood-badge ${d.bc}">${d.blood}</span></td>
+    <td><span class="tissue-tag">${d.tissue}</span></td>
+    <td style="color:var(--muted);font-size:12px">${d.area}</td>
+    <td style="color:var(--muted);font-size:12px">${d.facility}</td>
+  `;
+  tbody.appendChild(tr);
+});
+</script>
+</body>
+</html>
